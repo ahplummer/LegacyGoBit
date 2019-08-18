@@ -281,7 +281,7 @@ func main() {
 		//real work gets done here
 		obit, err := retrieveObit(obitlinks[i])
 		if err != nil {
-			log.Print("Not adding due to error: %s", err)
+			log.Printf("Not adding due to error: %s", err)
 		} else {
 			obits = append(obits, obit)
 		}

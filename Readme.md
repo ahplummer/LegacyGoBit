@@ -18,7 +18,7 @@ What I've learned from this:
 * JSON parsing
 
 What's not done
-* Tests
+* Tests (some need mocking)
 * Sqlite stuff (was commented out due to non-portability to Linux systems that had Sqlite bindings compiled differently)
 * Channel stuff - I really wanted to do concurrent processing, but had to the draw the line somewhere.
 
