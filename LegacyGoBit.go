@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 	"log"
 	"net/http"
