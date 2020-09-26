@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -17,57 +15,6 @@ import (
 	"os"
 	"strings"
 )
-/*
-func InitDB(filepath string) *sql.DB {
-	db, err := sql.Open("sqlite3", filepath)
-	if err != nil { panic(err) }
-	if db == nil { panic("db nil") }
-	return db
-}
-
-func CreateTable(db *sql.DB) {
-	// create table if not exists
-	sql_table := `
-	CREATE TABLE IF NOT EXISTS obits(
-		obitUrl TEXT NOT NULL PRIMARY KEY,
-		InsertedDatetime DATETIME
-	);
-	`
-	_, err := db.Exec(sql_table)
-	if err != nil { panic(err) }
-}
-func ReadObit(url string, db *sql.DB) (bool) {
-	sql_readone := `
-	SELECT obitUrl FROM obits
-	WHERE obitUrl = ?
-	`
-	rows, _ := db.Query(sql_readone, url)
-	defer rows.Close()
-	for rows.Next() {
-		return true
-	}
-	return false
-}
-
-func StoreObit(db *sql.DB, url string) {
-	sql_additem := `
-	INSERT OR REPLACE INTO obits(
-		obitUrl,
-		InsertedDatetime
-	) values(?, CURRENT_TIMESTAMP)
-	`
-
-	stmt, err := db.Prepare(sql_additem)
-	if err != nil { panic(err) }
-	defer stmt.Close()
-
-	_, err2 := stmt.Exec(url)
-	if err2 != nil { panic(err2) }
-
-}
-*/
-// readLines reads a whole file into memory
-// and returns a slice of its lines.
 func readLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -107,16 +54,6 @@ type Obit struct {
 	ImageObject ImageStruct `json:"image"`
 }
 
-func parseJson(jsonResponse string) (Obit, error) {
-	var obit Obit
-	err := json.Unmarshal([]byte(jsonResponse), &obit)
-	if err != nil{
-		fmt.Println(err)
-		return obit, err
-	}
-	fmt.Println(obit)
-	return obit, nil
-}
 func retrieveObit(url string) (Obit, error) {
 	var returnObit Obit
 	response, err := http.Get(url)
@@ -131,21 +68,24 @@ func retrieveObit(url string) (Obit, error) {
 		return returnObit, err
 	}
 	bodyString := string(bodyBytes)
-
-	parts := strings.Split(bodyString, "<script data-schema=\"NewsArticle\" type=\"application/ld+json\">")
+	parts := strings.Split(bodyString, "articleBody\": \"")
 	if len(parts) == 2 {
-		firstpart := strings.Replace(string(parts[1]) , "\n", "", -1)
-		partsinner := strings.Split(firstpart, "</script>")
-		goodjson := partsinner[0]
-		returnObit, err = parseJson(goodjson)
-		if err != nil {
-			return returnObit, err
+		parts2 := strings.Split(parts[1], "\",")
+		if len(parts2) > 1 {
+			returnObit.Text = parts2[0]
+			//fmt.Println(returnObit.Text)
 		}
-		return returnObit, nil
-	} else {
-		return returnObit, errors.New("Couldn't parse correctly, not enough parts")
 	}
-
+	photoBase := "https://cache.legacy.net/legacy/images/cobrands/ShreveportTimes/photos/"
+	parts = strings.Split(bodyString, photoBase)
+	if len(parts) > 1 {
+		parts2 := strings.Split(parts[1], ".jpg")
+		if len(parts2) > 1 {
+			returnObit.ImageObject.Url = photoBase + parts2[0] + ".jpg"
+		}
+	}
+	fmt.Println(returnObit)
+	return returnObit, nil
 }
 func generateHTML(obits *[]Obit) (string){
 	message := `<!DOCTYPE html>
@@ -246,7 +186,6 @@ func main() {
 		fmt.Printf("Syntax:\n\tObit [flags]\nwhere flags are:\n")
 		flag.PrintDefaults()
 	}
-
 	flag.Parse()
 
 	if flag.NFlag() != 4 {
