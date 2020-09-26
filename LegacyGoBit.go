@@ -178,6 +178,7 @@ func webScrape(url string, retrievedObits []string) []string {
 func main() {
 
 	to := flag.String("t","","destination Internet mail address")
+	user := flag.String("a","","User ID")
 	from := flag.String("f","","the sender's GMail address")
 	pwd := flag.String("p","","the sender's password")
 	url := flag.String("u", "", "the URL to use")
@@ -187,7 +188,7 @@ func main() {
 	}
 	flag.Parse()
 
-	if flag.NFlag() != 4 {
+	if flag.NFlag() != 5 {
 		flag.Usage()
 		return
 	}
@@ -228,7 +229,7 @@ func main() {
 		var html string
 		html = generateHTML(&obits)
 
-		auth := smtp.PlainAuth("", *from, *pwd, "smtp.gmail.com")
+		auth := smtp.PlainAuth("", *user, *pwd, "email-smtp.us-east-2.amazonaws.com")
 		// set headers for html email
 		header := textproto.MIMEHeader{}
 		header.Set(textproto.CanonicalMIMEHeaderKey("from"), *from)
@@ -250,7 +251,7 @@ func main() {
 
 		adds := strings.Split(*to, ",")
 		for i := 0; i < len(adds); i++ {
-			err := smtp.SendMail("smtp.gmail.com:587", auth, *from,
+			err := smtp.SendMail("email-smtp.us-east-2.amazonaws.com:587", auth, *from,
 				[]string{adds[i]}, buffer.Bytes())
 
 			if err != nil {
