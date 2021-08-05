@@ -52,10 +52,10 @@ type Obit struct {
 	Text string `json:"articleBody"`
 	ImageObject ImageStruct `json:"image"`
 }
-
 func retrieveObit(url string) (Obit, error) {
 	var returnObit Obit
-	response, err := http.Get(url)
+	fullurl :=  "https://www.legacy.com" + url
+	response, err := http.Get(fullurl)
 	defer response.Body.Close()
 	if err != nil {
 		log.Fatal(err)
@@ -67,22 +67,24 @@ func retrieveObit(url string) (Obit, error) {
 		return returnObit, err
 	}
 	bodyString := string(bodyBytes)
-	parts := strings.Split(bodyString, "articleBody\": \"")
-	if len(parts) == 2 {
+	//parts := strings.Split(bodyString, "articleBody\": \"")
+	parts := strings.Split(bodyString, "articleBody")
+	if len(parts) > 1 {
 		parts2 := strings.Split(parts[1], "\",")
 		if len(parts2) > 1 {
-			returnObit.Text = parts2[0]
+			returnObit.Text = parts2[0][3:]
 			//fmt.Println(returnObit.Text)
 		}
 	}
-	photoBase := "https://cache.legacy.net/legacy/images/cobrands/ShreveportTimes/photos/"
-	parts = strings.Split(bodyString, photoBase)
-	if len(parts) > 1 {
-		parts2 := strings.Split(parts[1], ".jpg")
-		if len(parts2) > 1 {
-			returnObit.ImageObject.Url = photoBase + parts2[0] + ".jpg"
-		}
-	}
+	////https://cache.legacy.net/legacy/images/cobrands/shreveporttimes/photos/SPT076298-1_20210726.jpgx?w=270&h=400&option=3
+	//photoBase := "https://cache.legacy.net/legacy/images/cobrands/shreveporttimes/photos/"
+	//parts = strings.Split(bodyString, photoBase)
+	//if len(parts) > 1 {
+	//	parts2 := strings.Split(parts[1], ".jpg")
+	//	if len(parts2) > 1 {
+	//		returnObit.ImageObject.Url = photoBase + parts2[0] + ".jpg"
+	//	}
+	//}
 	fmt.Println(returnObit)
 	return returnObit, nil
 }
@@ -151,7 +153,9 @@ func webScrape(url string, retrievedObits []string) []string {
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if exists {
-			if strings.Contains(href, "obituary.aspx?"){
+			//if strings.Contains(href, "obituary.aspx?"){
+			if strings.Contains(href,"/name/"){
+
 				href = stripUrl(href)
 				//doing a map, because it guarantees uniqueness, and will roll into a slice in a hot minute (below)
 				obitlinksmap[href] = struct{}{}
